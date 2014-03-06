@@ -1,0 +1,11 @@
+{
+	scene: {
+		width: 800,
+		height: 600
+	},
+	camera: {
+		viewangle: 50,
+		near: 0.1,
+		far: 10000
+	}
+}
