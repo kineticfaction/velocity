@@ -16,18 +16,19 @@
 			}
 		</style>
 		<script src='./js/Three.js'></script>
+		<script src='./js/velocity.observable.js'></script>
 	</head>
 	<body>
 		<div id="container"></div>
 		<script>
 			// shim layer with setTimeout fallback
 			window.requestAnimFrame = (function(){
-			  return  window.requestAnimationFrame       ||
-			          window.webkitRequestAnimationFrame ||
-			          window.mozRequestAnimationFrame    ||
-			          function( callback ){
-			            window.setTimeout(callback, 1000 / 60);
-			          };
+				return	window.requestAnimationFrame		||
+						window.webkitRequestAnimationFrame	||
+						window.mozRequestAnimationFrame		||
+						function( callback ){
+							window.setTimeout(callback, 1000 / 60);
+						};
 			})();
 
 			var constants = {
@@ -49,9 +50,9 @@
 			var renderer = new THREE.WebGLRenderer();
 			var camera = new THREE.PerspectiveCamera(
 				constants.camera.fov,
-			    constants.scene.width / constants.scene.height,
-			    constants.camera.near,
-			    constants.camera.far
+				constants.scene.width / constants.scene.height,
+				constants.camera.near,
+				constants.camera.far
 			);
 			var scene = new THREE.Scene();
 
@@ -71,21 +72,35 @@
 
 			// create the sphere's material
 			var sphereMaterial = new THREE.MeshLambertMaterial({
-			    color: 0xCCCCCC
+				color: 0xCCCCCC
 			});
 
 			// create a new mesh with sphere geometry -
 			// we will cover the sphereMaterial next!
 
-			var cube = new THREE.Mesh(
+			var cube1 = new THREE.Mesh(
 				new THREE.CubeGeometry(50,20,20), 
 				sphereMaterial
 			);
 
-			scene.add(cube);
-			scene.add(camera);
+			var cube2 = new THREE.Mesh(
+				new THREE.CubeGeometry(50,20,20), 
+				sphereMaterial
+			);
 
-			cube.position.y = -30;
+			var cube3 = new THREE.Mesh(
+				new THREE.CubeGeometry(50,20,20), 
+				sphereMaterial
+			);
+
+			scene.add(camera);
+			scene.add(cube1);
+			scene.add(cube2);
+			scene.add(cube3);
+
+			cube1.position.y = -20;
+			cube2.position.y = -60;
+			cube3.position.y = -100;
 
 			// create a point light
 			var lights = []
@@ -119,10 +134,10 @@
 			//var keyboard = new THREEx.KeyboardState();
 
 			var havePointerLock = 'pointerLockElement' in document ||
-    			'mozPointerLockElement' in document ||
-    			'webkitPointerLockElement' in document;
+				'mozPointerLockElement' in document ||
+				'webkitPointerLockElement' in document;
 
-    		if(havePointerLock) {
+			if(havePointerLock) {
 
 				container.addEventListener('click', function() {
 
@@ -134,56 +149,66 @@
 					container.requestPointerLock();
 
 					container.addEventListener('mousemove', function(e) {
-						 	movementX = 	e.movementX       ||
-                    						e.mozMovementX    ||
-                      						e.webkitMovementX ||
-                      						0,
-          					movementY = 	e.movementY       ||
-                      						e.mozMovementY    ||
-                      						e.webkitMovementY ||
-                      						0;
+						movementX = 	e.movementX       ||
+										e.mozMovementX    ||
+				  						e.webkitMovementX ||
+				  						0,
+						movementY = 	e.movementY       ||
+				  						e.mozMovementY    ||
+				  						e.webkitMovementY ||
+				  						0;
 					}, false);
 
 					// Ask the browser to release the pointer
 					document.exitPointerLock = document.exitPointerLock ||
-								document.mozExitPointerLock ||
-								document.webkitExitPointerLock;
+						document.mozExitPointerLock ||
+						document.webkitExitPointerLock;
 					document.exitPointerLock();
-
 
 				}, false);
 
-    			
-    		}
+			}
 
 			var movementX = 0;
 			var movementY = 0;
-			
 
-			// draw!
-			(function animloop(){
-			  requestAnimFrame(animloop);
-			  update();
-			  render();
-			})();
 
-			function update() {
 
+			var updateLights = function() {
+				lights[0].position.x = lights[0].position.x + 1;
+				lights[1].position.y = lights[1].position.y + 1;
+				lights[2].position.z = lights[2].position.z + 1;
+			}
+
+
+
+			var updatePlayer = function() {
 				if(movementX > 10) { movementX = 10; }
 				if(movementX < -10) { movementX = -10; }
-				cube.rotation.y += movementX / 50;
+				camera.rotation.y += movementX / 500;
 				movementX = 0;
 
 				if(movementY > 10) { movementY = 10; }
 				if(movementY < -10) { movementY = -10; }
-				cube.rotation.x += movementY / 250;
+				camera.rotation.x += movementY / 2500;
 				movementY = 0;
+			}
 
-			}	
+			var Update = new Observable();
+			Update.subscribe(updatePlayer);
+			Update.subscribe(updateLights);
 
 			function render() {
 				renderer.render(scene, camera);
 			}
+			
+
+			// draw!
+			(function animloop(){
+				requestAnimFrame(animloop);
+				Update.notify(0);
+				render();
+			})();
 
 
 		</script>
