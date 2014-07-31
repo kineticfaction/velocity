@@ -1,4 +1,4 @@
-velocity.class = {};
+
 velocity.class.Observable = function (config) {}
 velocity.class.Observable.prototype.observers = [];
 velocity.class.Observable.prototype.subscribe = function(observer) {

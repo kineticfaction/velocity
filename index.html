@@ -12,16 +12,18 @@
 				width: 800px;
 				height: 450px;
 				margin: auto;
-				align: center;
+				text-align: center;
 			}
 		</style>
-		<script src='./js/Three.js'></script>
+		<script src='./js/three.min.js'></script>
 		<script>
 
 			var velocity = {};
 
 		</script>
+		<script src='./js/velocity.class.js'></script>
 		<script src='./js/velocity.class.observable.js'></script>
+		<script src='./js/velocity.class.actor.js'></script>
 		<script src='./js/velocity.js'></script>
 	</head>
 	<body>
@@ -43,27 +45,23 @@
 			// attach the render-supplied DOM element
 			container.appendChild(velocity.renderer.domElement);
 
-			// create the sphere's material
-			var sphereMaterial = new THREE.MeshLambertMaterial({
+			var cubeMaterial = new THREE.MeshLambertMaterial({
 				color: 0xCCCCCC
 			});
 
-			// create a new mesh with sphere geometry -
-			// we will cover the sphereMaterial next!
-
 			var cube1 = new THREE.Mesh(
 				new THREE.CubeGeometry(50,20,20), 
-				sphereMaterial
+				cubeMaterial
 			);
 
 			var cube2 = new THREE.Mesh(
 				new THREE.CubeGeometry(50,20,20), 
-				sphereMaterial
+				cubeMaterial
 			);
 
 			var cube3 = new THREE.Mesh(
 				new THREE.CubeGeometry(50,20,20), 
-				sphereMaterial
+				cubeMaterial
 			);
 
 			velocity.scene.add(velocity.camera);
@@ -102,9 +100,6 @@
 			velocity.scene.add(lights[0]);
 			velocity.scene.add(lights[1]);
 			velocity.scene.add(lights[2]);
-
-
-			//var keyboard = new THREEx.KeyboardState();
 
 			var havePointerLock = 	'pointerLockElement' in document ||
 									'mozPointerLockElement' in document ||
