@@ -14,11 +14,24 @@ velocity.requestFrame = function(callback){
 
 };
 
+velocity.frameData = 0;
+velocity.clock = new THREE.Clock();
+velocity.tickrate = 1 / 60;
+
 velocity.eventloop = function() {
+
 	velocity.requestFrame(
 		velocity.eventloop
 	);
-	velocity.update.notify(0);
+
+	// update
+	velocity.frameData += velocity.clock.getDelta();
+	while(velocity.frameData >= velocity.tickrate) {
+		velocity.update.notify(velocity.tickrate);
+		velocity.frameData -= velocity.tickrate;
+	}
+
+	// draw
 	velocity.render();
 }
 
@@ -32,7 +45,7 @@ velocity.renderer = new THREE.WebGLRenderer();
 
 velocity.camera = new THREE.PerspectiveCamera(
 	45,
-	800 / 450,
+	1200 / 600,
 	0.1,
 	1000
 );

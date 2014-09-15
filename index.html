@@ -9,10 +9,13 @@
 			}
 			#container {
 				background-color: black;
-				width: 800px;
-				height: 450px;
+				width: 1200px;
+				height: 600px;
 				margin: auto;
 				text-align: center;
+			}
+			#fps {
+				color: lime;
 			}
 		</style>
 		<script src='./js/three.min.js'></script>
@@ -24,22 +27,27 @@
 		<script src='./js/velocity.class.js'></script>
 		<script src='./js/velocity.class.observable.js'></script>
 		<script src='./js/velocity.class.actor.js'></script>
+		<script src='./js/velocity.class.player.js'></script>
 		<script src='./js/velocity.js'></script>
+		<script src='./js/binds.js'></script>
 	</head>
 	<body>
+		<div id="fps"></div>
 		<div id="container"></div>
 		<script>
 
-			var container = document.getElementById("container");
+			var clock = new THREE.Clock();
 
-			velocity.camera.position.z = 400;
-			velocity.camera.position.y = 0;
-			velocity.camera.rotation.x = 0;
+ 			var container = document.getElementById("container");
+
+			// velocity.camera.position.z = 400;
+			// velocity.camera.position.y = 0;
+			// velocity.camera.rotation.x = 0;
 
 			// start the renderer
 			velocity.renderer.setSize(
-				800, 
-				450
+				1200, 
+				600
 			);
 
 			// attach the render-supplied DOM element
@@ -48,30 +56,6 @@
 			var cubeMaterial = new THREE.MeshLambertMaterial({
 				color: 0xCCCCCC
 			});
-
-			var cube1 = new THREE.Mesh(
-				new THREE.CubeGeometry(50,20,20), 
-				cubeMaterial
-			);
-
-			var cube2 = new THREE.Mesh(
-				new THREE.CubeGeometry(50,20,20), 
-				cubeMaterial
-			);
-
-			var cube3 = new THREE.Mesh(
-				new THREE.CubeGeometry(50,20,20), 
-				cubeMaterial
-			);
-
-			velocity.scene.add(velocity.camera);
-			velocity.scene.add(cube1);
-			velocity.scene.add(cube2);
-			velocity.scene.add(cube3);
-
-			cube1.position.y = -20;
-			cube2.position.y = -60;
-			cube3.position.y = -100;
 
 			// create a point light
 			var lights = []
@@ -101,40 +85,92 @@
 			velocity.scene.add(lights[1]);
 			velocity.scene.add(lights[2]);
 
-			var havePointerLock = 	'pointerLockElement' in document ||
-									'mozPointerLockElement' in document ||
-									'webkitPointerLockElement' in document;
 
-			if(havePointerLock) {
-				container.addEventListener('click', function() {
-					container.requestPointerLock = 	container.requestPointerLock ||
-													container.mozRequestPointerLock ||
-													container.webkitRequestPointerLock;
-					// Ask the browser to lock the pointer
+			// Ask the browser to lock the pointer
+			container.addEventListener('click', function() {
+				container.requestPointerLock = 	container.requestPointerLock || 
+												container.mozRequestPointerLock || 
+												container.webkitRequestPointerLock;
+
+				if ( /Firefox/i.test( navigator.userAgent ) ) {
+					var fullscreenchange = function ( event ) {
+						if (
+							document.fullscreenElement === container || 
+							document.mozFullscreenElement === container || 
+							document.mozFullScreenElement === container
+						) {
+							document.removeEventListener( 'fullscreenchange', fullscreenchange );
+							document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+							container.requestPointerLock();
+						}
+					}
+					document.addEventListener('fullscreenchange', fullscreenchange, false);
+					document.addEventListener('mozfullscreenchange', fullscreenchange, false);
+					container.requestFullscreen = container.requestFullscreen || 
+												container.mozRequestFullscreen || 
+												container.mozRequestFullScreen || 
+												container.webkitRequestFullscreen;
+					container.requestFullscreen();
+				} else {
 					container.requestPointerLock();
-					container.addEventListener('mousemove', function(e) {
-						movementX = 	e.movementX       ||
-										e.mozMovementX    ||
-				  						e.webkitMovementX ||
-				  						0,
-						movementY = 	e.movementY       ||
-				  						e.mozMovementY    ||
-				  						e.webkitMovementY ||
-				  						0;
-					}, false);
-					// Ask the browser to release the pointer
-					document.exitPointerLock = 	document.exitPointerLock ||
-												document.mozExitPointerLock ||
-												document.webkitExitPointerLock;
-					document.exitPointerLock();
-				}, false);
+				}
 
-			}
+				// Ask the browser to release the pointer
+				document.exitPointerLock = 	document.exitPointerLock ||
+											document.mozExitPointerLock ||
+											document.webkitExitPointerLock;
+				document.exitPointerLock();
+
+			}, false);
 
 			var movementX = 0;
 			var movementY = 0;
 
+			var map = 	"XXXXXXX  \n" +
+						"X     X  \n" +
+						"X  S  X  \n" +
+						"X     X  \n" +
+						"X   S XXX\n" +
+						"XXX     X\n" +
+						"  XX  S X\n" +
+						"   X    X\n" +
+						"   XXXXXX";
 
+			map = map.split("\n");
+
+			var HORIZONTAL_UNIT = 100;
+			var VERTICAL_UNIT = 100;
+			var ZSIZE = map.length * HORIZONTAL_UNIT;
+			var XSIZE = map[0].length * HORIZONTAL_UNIT;
+
+			for(var i = 0, rows = map.length; i < rows; i++) {
+				for(var j = 0, cols = map[i].length; j < cols; j++) {
+					addVoxel(map[i].charAt(j), i, j);
+				}
+			 }
+
+			 function addVoxel(type, row, col) {
+			 	var z = (row+1) * HORIZONTAL_UNIT - ZSIZE * 0.5;
+			 	var x = (col+1) * HORIZONTAL_UNIT - XSIZE * 0.5;
+			 	switch(type) {
+			 		case ' ': break;
+			 		case 'S': break;
+			 		case 'X':
+			 			var geo = new THREE.BoxGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
+			 			var material = new THREE.MeshPhongMaterial({
+			 				color: Math.random() * 0xffffff
+			 			});
+			 			var mesh = new THREE.Mesh(geo, material);
+			 			mesh.position.set(x, VERTICAL_UNIT*0.5, z);
+			 			velocity.scene.add(mesh);
+			 			break;
+			 	}
+			 }
+
+
+			player = new velocity.class.Player();
+			velocity.scene.add(player);
+			velocity.update.subscribe(player.update);
 
 			var updateLights = function() {
 				lights[0].position.x = lights[0].position.x + 1;
@@ -142,21 +178,6 @@
 				lights[2].position.z = lights[2].position.z + 1;
 			}
 
-
-
-			var updatePlayer = function() {
-				if(movementX > 10) { movementX = 10; }
-				if(movementX < -10) { movementX = -10; }
-				velocity.camera.rotation.y += movementX / 500;
-				movementX = 0;
-
-				if(movementY > 10) { movementY = 10; }
-				if(movementY < -10) { movementY = -10; }
-				velocity.camera.rotation.x += movementY / 2500;
-				movementY = 0;
-			}
-
-			velocity.update.subscribe(updatePlayer);
 			velocity.update.subscribe(updateLights);
 
 			velocity.eventloop();
