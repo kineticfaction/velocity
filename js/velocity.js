@@ -33,6 +33,7 @@ velocity.eventloop = function() {
 
 	// draw
 	velocity.render();
+	velocity.scene.simulate();
 }
 
 velocity.render = function() {
@@ -50,4 +51,4 @@ velocity.camera = new THREE.PerspectiveCamera(
 	1000
 );
 
-velocity.scene = new THREE.Scene();
+velocity.scene = new Physijs.Scene();

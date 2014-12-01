@@ -19,7 +19,11 @@
 			}
 		</style>
 		<script src='./js/three.min.js'></script>
+		<script type="text/javascript" src="js/physi.js"></script>
 		<script>
+
+			Physijs.scripts.worker = '/velocity/js/physijs_worker.js';
+			Physijs.scripts.ammo = '/velocity/js/ammo.js';
 
 			var velocity = {};
 
@@ -40,11 +44,6 @@
 
  			var container = document.getElementById("container");
 
-			// velocity.camera.position.z = 400;
-			// velocity.camera.position.y = 0;
-			// velocity.camera.rotation.x = 0;
-
-			// start the renderer
 			velocity.renderer.setSize(
 				1200, 
 				600
@@ -147,30 +146,47 @@
 				for(var j = 0, cols = map[i].length; j < cols; j++) {
 					addVoxel(map[i].charAt(j), i, j);
 				}
-			 }
+			}
 
-			 function addVoxel(type, row, col) {
-			 	var z = (row+1) * HORIZONTAL_UNIT - ZSIZE * 0.5;
-			 	var x = (col+1) * HORIZONTAL_UNIT - XSIZE * 0.5;
-			 	switch(type) {
-			 		case ' ': break;
-			 		case 'S': break;
-			 		case 'X':
-			 			var geo = new THREE.BoxGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-			 			var material = new THREE.MeshPhongMaterial({
-			 				color: Math.random() * 0xffffff
-			 			});
-			 			var mesh = new THREE.Mesh(geo, material);
-			 			mesh.position.set(x, VERTICAL_UNIT*0.5, z);
-			 			velocity.scene.add(mesh);
-			 			break;
-			 	}
-			 }
+			function addVoxel(type, row, col) {
+				var z = (row+1) * HORIZONTAL_UNIT - ZSIZE * 0.5;
+				var x = (col+1) * HORIZONTAL_UNIT - XSIZE * 0.5;
+				switch(type) {
+					case ' ': break;
+					case 'S': break;
+					case 'X':
+						var geo = new THREE.BoxGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
+						var material = new THREE.MeshPhongMaterial({
+							color: Math.random() * 0xffffff
+						});
+						var mesh = new Physijs.BoxMesh(geo, material, 10);
+						mesh.position.set(x, VERTICAL_UNIT*0.5, z);
+						velocity.scene.add(mesh);
+						break;
+				}
+			}
 
+			velocity.scene.setGravity(new THREE.Vector3( 0, -10, 0 ));
+
+			groundplane = new Physijs.PlaneMesh(
+				new THREE.PlaneGeometry(1000, 1000),
+				Physijs.createMaterial(
+					new THREE.MeshPhongMaterial({
+						color: Math.random() * 0xffffff
+					}),
+					.8, // high friction
+					.3 // low restitution
+				)
+			);
+			groundplane.rotation.set(-1.57079633, 0, 0);
+			groundplane.position.y = 0;
+			velocity.scene.add(groundplane);
 
 			player = new velocity.class.Player();
 			velocity.scene.add(player);
 			velocity.update.subscribe(player.update);
+
+			player.position.y = 50;
 
 			var updateLights = function() {
 				lights[0].position.x = lights[0].position.x + 1;
