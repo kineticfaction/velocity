@@ -42,7 +42,7 @@ velocity.render = function() {
 
 velocity.update = new velocity.class.Observable();
 
-velocity.renderer = new THREE.WebGLRenderer();
+velocity.renderer = new THREE.WebGLRenderer({ antialias: true });
 
 velocity.camera = new THREE.PerspectiveCamera(
 	45,

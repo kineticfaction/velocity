@@ -156,9 +156,13 @@
 					case 'S': break;
 					case 'X':
 						var geo = new THREE.BoxGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
-						var material = new THREE.MeshPhongMaterial({
-							color: Math.random() * 0xffffff
-						});
+						var material = Physijs.createMaterial(
+							new THREE.MeshPhongMaterial({
+								color: Math.random() * 0xffffff
+							}),
+							.8, // high friction
+							.3 // low restitution
+						);
 						var mesh = new Physijs.BoxMesh(geo, material, 10);
 						mesh.position.set(x, VERTICAL_UNIT*0.5, z);
 						velocity.scene.add(mesh);
