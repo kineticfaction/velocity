@@ -1,11 +1,32 @@
 
-velocity.class.Player = function(config) {
+velocity.class.Player = function(geo, mat) {
 
 	// call parent
-	velocity.class.Actor.call(this);
+	Physijs.Mesh.call(this, geo, mat);
+
+	this.velocity = new THREE.Vector3();
+	this.acceleration = new THREE.Vector3(0, 0, 0);
+	//this.acceleration = new THREE.Vector3(0, -150, 0); // gravity
+
+	this.friction = {
+		ground: new THREE.Vector3(-10, 0, -10),
+		air: new THREE.Vector3(-0.5, 0, -0.5)
+	}
+
+	this.canJump = true;
+
+	this.moveDirection = {
+		FORWARD: false,
+		BACKWARD: false,
+		LEFT: false,
+		RIGHT: false
+	}
+
 
 	var playerObject = this;
 	
+	//this.__dirtyRotation = true;
+
 	this.rotation.order = 'YXZ';
 
 	this._aggregateRotation = new THREE.Vector3();
@@ -81,5 +102,5 @@ velocity.class.Player = function(config) {
 
 }
 
-velocity.class.Player.prototype = new velocity.class.Actor();
+velocity.class.Player.prototype = Physijs.Mesh.prototype;
 velocity.class.Player.constructor = velocity.class.Player;

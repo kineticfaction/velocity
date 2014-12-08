@@ -1,59 +1,202 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
+  <head>
+  		<meta charset="utf-8">
+		<title>Game</title>
+		<style>
+			body {
+				background-color: #333;
+			}
+			#container {
+				background-color: black;
+				width: 1200px;
+				height: 600px;
+				margin: auto;
+				text-align: center;
+			}
+			#fps {
+				color: lime;
+			}
+		</style>
+		<script src='./js/three.min.js'></script>
+		<script type="text/javascript" src="js/physi.js"></script>
+		<script>
 
-<head>
-    <script type="text/javascript" src="js/Three.js"></script>
-    <script type="text/javascript" src="js/physi.js"></script>
+			Physijs.scripts.worker = '/velocity/js/physijs_worker.js';
+			Physijs.scripts.ammo = '/velocity/js/ammo.js';
 
-    <script type="text/javascript">
+			var velocity = {};
 
-		'use strict';
+		</script>
+	</head>
+	<body>
+		<div id="fps"></div>
+		<div id="container"></div>
+		<script>
 
-		Physijs.scripts.worker = '/js/physijs_worker.js';
-		Physijs.scripts.ammo = '/js/ammo.js';
+			var clock = new THREE.Clock();
 
-		var initScene, render, renderer, scene, camera, box;
+ 			var container = document.getElementById("container");
 
-		initScene = function() {
-			renderer = new THREE.WebGLRenderer({ antialias: true });
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.getElementById( 'viewport' ).appendChild( renderer.domElement );
-
-			scene = new Physijs.Scene;
-
-			camera = new THREE.PerspectiveCamera(
-				35,
-				window.innerWidth / window.innerHeight,
-				1,
-				1000
+			velocity.renderer.setSize(
+				1200, 
+				600
 			);
-			camera.position.set( 60, 50, 60 );
-			camera.lookAt( scene.position );
-			scene.add( camera );
 
-			// Box
-			box = new Physijs.BoxMesh(
-			    new THREE.CubeGeometry( 5, 5, 5 ),
-			    new THREE.MeshBasicMaterial({ color: 0x888888 }),
-			    10
+			// attach the render-supplied DOM element
+			container.appendChild(velocity.renderer.domElement);
+
+			var cubeMaterial = new THREE.MeshLambertMaterial({
+				color: 0xCCCCCC
+			});
+
+			// create a point light
+			var lights = []
+
+			lights[0] = new THREE.PointLight( 0xFF3333 );
+			lights[1] = new THREE.PointLight( 0x33FF33 );
+			lights[2] = new THREE.PointLight( 0x3333FF );
+
+
+			// set its position
+			lights[0].position.x = 10;
+			lights[0].position.y = 50;
+			lights[0].position.z = 130;
+
+			// set its position
+			lights[1].position.x = -100;
+			lights[1].position.y = -50;
+			lights[1].position.z = 130;
+
+			// set its position
+			lights[2].position.x = 100;
+			lights[2].position.y = 50;
+			lights[2].position.z = -130;
+
+			// add to the scene
+			velocity.scene.add(lights[0]);
+			velocity.scene.add(lights[1]);
+			velocity.scene.add(lights[2]);
+
+
+			// Ask the browser to lock the pointer
+			container.addEventListener('click', function() {
+				container.requestPointerLock = 	container.requestPointerLock || 
+												container.mozRequestPointerLock || 
+												container.webkitRequestPointerLock;
+
+				if ( /Firefox/i.test( navigator.userAgent ) ) {
+					var fullscreenchange = function ( event ) {
+						if (
+							document.fullscreenElement === container || 
+							document.mozFullscreenElement === container || 
+							document.mozFullScreenElement === container
+						) {
+							document.removeEventListener( 'fullscreenchange', fullscreenchange );
+							document.removeEventListener( 'mozfullscreenchange', fullscreenchange );
+							container.requestPointerLock();
+						}
+					}
+					document.addEventListener('fullscreenchange', fullscreenchange, false);
+					document.addEventListener('mozfullscreenchange', fullscreenchange, false);
+					container.requestFullscreen = container.requestFullscreen || 
+												container.mozRequestFullscreen || 
+												container.mozRequestFullScreen || 
+												container.webkitRequestFullscreen;
+					container.requestFullscreen();
+				} else {
+					container.requestPointerLock();
+				}
+
+				// Ask the browser to release the pointer
+				document.exitPointerLock = 	document.exitPointerLock ||
+											document.mozExitPointerLock ||
+											document.webkitExitPointerLock;
+				document.exitPointerLock();
+
+			}, false);
+
+			var movementX = 0;
+			var movementY = 0;
+
+			var map = 	"XXXXXXX  \n" +
+						"X     X  \n" +
+						"X  S  X  \n" +
+						"X     X  \n" +
+						"X   S XXX\n" +
+						"XXX     X\n" +
+						"  XX  S X\n" +
+						"   X    X\n" +
+						"   XXXXXX";
+
+			map = map.split("\n");
+
+			var HORIZONTAL_UNIT = 100;
+			var VERTICAL_UNIT = 100;
+			var ZSIZE = map.length * HORIZONTAL_UNIT;
+			var XSIZE = map[0].length * HORIZONTAL_UNIT;
+
+			for(var i = 0, rows = map.length; i < rows; i++) {
+				for(var j = 0, cols = map[i].length; j < cols; j++) {
+					addVoxel(map[i].charAt(j), i, j);
+				}
+			}
+
+			function addVoxel(type, row, col) {
+				var z = (row+1) * HORIZONTAL_UNIT - ZSIZE * 0.5;
+				var x = (col+1) * HORIZONTAL_UNIT - XSIZE * 0.5;
+				switch(type) {
+					case ' ': break;
+					case 'S': break;
+					case 'X':
+						var geo = new THREE.BoxGeometry(HORIZONTAL_UNIT, VERTICAL_UNIT, HORIZONTAL_UNIT);
+						var material = Physijs.createMaterial(
+							new THREE.MeshPhongMaterial({
+								color: Math.random() * 0xffffff
+							}),
+							.8, // high friction
+							.3 // low restitution
+						);
+						var mesh = new Physijs.BoxMesh(geo, material, 10);
+						mesh.position.set(x, VERTICAL_UNIT*0.5, z);
+						velocity.scene.add(mesh);
+						break;
+				}
+			}
+
+			velocity.scene.setGravity(new THREE.Vector3( 0, -10, 0 ));
+
+			groundplane = new Physijs.PlaneMesh(
+				new THREE.PlaneGeometry(1000, 1000),
+				Physijs.createMaterial(
+					new THREE.MeshPhongMaterial({
+						color: Math.random() * 0xffffff
+					}),
+					.8, // high friction
+					.3 // low restitution
+				)
 			);
-			scene.add( box );
+			groundplane.rotation.set(-1.57079633, 0, 0);
+			groundplane.position.y = 0;
+			velocity.scene.add(groundplane);
 
-			requestAnimationFrame( render );
-		};
+			player = new velocity.class.Player();
+			velocity.scene.add(player);
+			velocity.update.subscribe(player.update);
 
-		render = function() {
-			scene.simulate(); // run physics
-			renderer.render( scene, camera); // render the scene
-			requestAnimationFrame( render );
-		};
+			player.position.y = 50;
 
-		window.onload = initScene;
+			var updateLights = function() {
+				lights[0].position.x = lights[0].position.x + 1;
+				lights[1].position.y = lights[1].position.y + 1;
+				lights[2].position.z = lights[2].position.z + 1;
+			}
 
-    </script>
-</head>
+			velocity.update.subscribe(updateLights);
 
-<body>
-    <div id="viewport"></div>
-</body>
+			velocity.eventloop();
+
+
+		</script>
+	</body>
 </html>

@@ -186,7 +186,16 @@
 			groundplane.position.y = 0;
 			velocity.scene.add(groundplane);
 
-			player = new velocity.class.Player();
+			player = new velocity.class.Player(
+				new THREE.BoxGeometry(100, 100, 100),
+				Physijs.createMaterial(
+					new THREE.MeshPhongMaterial({
+						color: Math.random() * 0xffffff
+					}),
+					.8, // high friction
+					.3 // low restitution
+				)
+			);
 			velocity.scene.add(player);
 			velocity.update.subscribe(player.update);
 
